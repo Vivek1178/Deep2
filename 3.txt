@@ -1,0 +1,102 @@
+import tensorflow as tf
+from tensorflow.keras import datasets, layers, models
+import matplotlib.pyplot as plt
+import numpy as np
+
+
+def unpickle(file):
+    import pickle
+    with open(file, 'rb') as fo:
+        dict = pickle.load(fo, encoding='bytes')
+    return dict
+
+
+train = unpickle(r"cifar-10-batches-py\data_batch_1")
+test = unpickle(r"cifar-10-batches-py\test_batch")
+x_train = np.array(train[b'data'])
+y_train = np.array(train[b'labels'])
+x_test = np.array(test[b'data'])
+y_test = np.array(test[b'labels'])
+x_train = x_train.reshape(-1, 32, 32, 3)
+x_test = x_test.reshape(-1, 32, 32, 3)
+
+
+y_train.shape
+
+
+
+x_test.shape
+
+
+y_train = y_train.reshape(-1,)
+y_train[:5]
+
+
+y_test = y_test.reshape(-1,)
+
+
+classes = ["airplane","automobile","bird","cat","deer","dog","frog","horse","ship","truck"]
+
+
+def plot_sample(X, y, index):
+    plt.figure(figsize = (15,2))
+    plt.imshow(X[index])
+    plt.xlabel(classes[y[index]])
+
+
+plot_sample(x_train, y_train, 0)
+
+
+plot_sample(x_train, y_train, 1)
+
+
+
+x_train = x_train / 255.0
+x_test = x_test / 255.0
+
+
+
+cnn = models.Sequential([
+    layers.Conv2D(filters=32, kernel_size=(3, 3), activation='relu', input_shape=(32, 32, 3)),
+    layers.MaxPooling2D((2, 2)),
+    
+    layers.Conv2D(filters=64, kernel_size=(3, 3), activation='relu'),
+    layers.MaxPooling2D((2, 2)),
+    
+    layers.Flatten(),
+    layers.Dense(64, activation='relu'),
+    layers.Dense(10, activation='softmax')
+])
+
+
+
+cnn.compile(optimizer='adam',
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+
+
+
+fitted = cnn.fit(x_train, y_train, epochs=10, validation_data=(x_test, y_test))
+
+
+test_loss, test_accuracy = cnn.evaluate(x_test,y_test)
+
+
+plt.figure(figsize=(12, 4))
+plt.subplot(1, 2, 1)
+plt.plot(fitted.history['loss'], label='Training Loss')
+plt.plot(fitted.history['val_loss'], label='Validation Loss')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.legend()
+plt.title('Training and Validation Loss')
+
+plt.subplot(1, 2, 2)
+plt.plot(fitted.history['accuracy'], label='Training Accuracy')
+plt.plot(fitted.history['val_accuracy'], label='Validation Accuracy')
+plt.xlabel('Epoch')
+plt.ylabel('Accuracy')
+plt.legend()
+plt.title('Training and Validation Accuracy')
+
+plt.show()
